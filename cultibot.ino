@@ -39,6 +39,9 @@
 #define LIGHTBULB_TRANSISTOR_PIN 10
 
 /***************************** UMBRALES GENERALES *****************************/
+#define MIN_VALUE 0
+#define MAX_VALUE 100
+
 #define LIGHT_MIN_VALUE 0
 #define LIGHT_MAX_VALUE 420
 
@@ -154,7 +157,8 @@ ISR(TIMER1_COMPA_vect) { timeout = true; }
 float read_temperature(int sensor)
 {
     // Lectura y cálculo para obtener la temperatura del ambiente
-    return TEMP_SENSOR_PIN_CONST * analogRead(sensor) - TEMP_SENSOR_PIN_CONST2;
+    int temp_value = analogRead(sensor);
+    return TEMP_SENSOR_PIN_CONST * temp_value - TEMP_SENSOR_PIN_CONST2;
 }
 
 float read_humidity(int sensor)
@@ -166,7 +170,8 @@ float read_humidity(int sensor)
 int read_light(int sensor)
 {
     // Realizamos un mapeo para tener el porcentaje de luz recibido
-    return map(analogRead(sensor), LIGHT_MIN_VALUE, LIGHT_MAX_VALUE, 0, 100);
+    int light_value = analogRead(sensor);
+    return map(light_value, LIGHT_MIN_VALUE, LIGHT_MAX_VALUE, MIN_VALUE, MAX_VALUE);
 }
 
 bool check_temperature()
