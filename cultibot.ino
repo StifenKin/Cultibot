@@ -17,12 +17,8 @@
         String est = state;                                            \
         String evt = event;                                            \
         String str;                                                    \
-        str = "-----------------------------------------------------"; \
-        DebugPrint(str);                                               \
-        str = "EST-> [" + est + "]: " + "EVT-> [" + evt + "].";        \
-        DebugPrint(str);                                               \
-        str = "-----------------------------------------------------"; \
-        DebugPrint(str);                                               \
+        str = "STATE-> [" + est + "]: " + "EVENT-> [" + evt + "].";        \
+        DebugPrint(str);                                               \ 
     }
 //----------------------------------------------
 
@@ -58,10 +54,10 @@
 #define TEMP_SENSOR_PIN_CONST2 50
 
 /*************************** UMBRALES PARTICULARES ****************************/
-#define CRITIC_HIGH_TEMP_100 33
-#define CRITIC_HIGH_TEMP_75 30
-#define CRITIC_HIGH_TEMP_50 28
-#define CRITIC_HIGH_TEMP_25 26
+#define CRITIC_HIGH_TEMP_100 100
+#define CRITIC_HIGH_TEMP_75 75
+#define CRITIC_HIGH_TEMP_50 50
+#define CRITIC_HIGH_TEMP_25 25
 #define CRITIC_LOW_TEMP 20
 
 #define CRITIC_LOW_LIGHT 25
@@ -183,7 +179,7 @@ int read_light(int sensor)
 bool check_temperature()
 {
     // Retorna falso cuando la temperatura esta en la region critica
-    return event.temperature > CRITIC_LOW_TEMP && event.temperature < CRITIC_HIGH_TEMP;
+    return event.temperature > CRITIC_LOW_TEMP && event.temperature < CRITIC_HIGH_TEMP_25;
 }
 
 bool check_light()
