@@ -58,10 +58,16 @@
 #define TEMP_SENSOR_PIN_CONST2 50
 
 /*************************** UMBRALES PARTICULARES ****************************/
-#define CRITIC_HIGH_TEMP 26
+#define CRITIC_HIGH_TEMP_100 33
+#define CRITIC_HIGH_TEMP_75 30
+#define CRITIC_HIGH_TEMP_50 28
+#define CRITIC_HIGH_TEMP_25 26
 #define CRITIC_LOW_TEMP 20
+
 #define CRITIC_LOW_LIGHT 25
+
 #define CRITIC_LOW_HUMIDITY 90
+
 #define INITIAL_TEMP -1500
 #define INITIAL_HUMIDITY -1500
 #define INITIAL_LIGHT -1
@@ -212,9 +218,10 @@ void turn_on_triggers()
         digitalWrite(WATER_LED_PIN, LOW);
     }
 
-    if (event.temperature > CRITIC_HIGH_TEMP)
+    if (event.temperature > CRITIC_HIGH_TEMP_25)
     {
-        analogWrite(COOLER_TRANSISTOR_PIN, COOLER_100);
+        int cooler_intensity = get_cooler_intensity(event.temperature);
+        analogWrite(COOLER_TRANSISTOR_PIN, cooler_intensity);
     }
     else
     {
@@ -244,6 +251,24 @@ void turn_on_triggers()
 
     // Para indicar que se adecuo las condiciones ambientales
     event.type = ADECUATED;
+}
+
+int get_cooler_intensity(int temperature)
+{
+    // Calculo de la intensidad del cooler
+    if (temperature > CRITIC_HIGH_TEMP_100)
+    {
+        return COOLER_100;
+    }
+    if (temperature > CRITIC_HIGH_TEMP_75)
+    {
+        return COOLER_75;
+    }
+    if (temperature > CRITIC_HIGH_TEMP_50)
+    {
+        return COOLER_50;
+    }
+    return COOLER_25;
 }
 
 // <------------------------- MAQUINA DE ESTADOS ------------------------->
