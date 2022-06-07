@@ -12,13 +12,13 @@
 #define DebugPrint(str)
 #endif
 
-#define DebugPrintEstado(state, event)                                 \
-    {                                                                  \
-        String est = state;                                            \
-        String evt = event;                                            \
-        String str;                                                    \
-        str = "STATE-> [" + est + "]: " + "EVENT-> [" + evt + "].";        \
-        DebugPrint(str);                                               \ 
+#define DebugPrintEstado(state, event)                              \
+    {                                                               \
+        String est = state;                                         \
+        String evt = event;                                         \
+        String str;                                                 \
+        str = "STATE-> [" + est + "]: " + "EVENT-> [" + evt + "]."; \
+        DebugPrint(str);                                            \
     }
 //----------------------------------------------
 
@@ -90,6 +90,19 @@ String events[] = {"CONTINUE", "MONITOR_NEEDED", "MONITORED", "EVALUATED", "ADEC
 
 #define STATES 5
 #define EVENTS 5
+
+void ini();
+void check_if_monitor_is_needed();
+bool is_valid_transition(int, int);
+void finite_state_machine();
+void init_();
+void none();
+void wait();
+void monitor_plant();
+void monitored_plant();
+void adecuate();
+void idle_again();
+void error();
 
 typedef void (*transition)();
 
