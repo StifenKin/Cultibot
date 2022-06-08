@@ -91,6 +91,7 @@
 #define PIN_SERIAL_BLUETOOTH_RX 10
 #define PIN_SERIAL_BLUETOOTH_TX 11
 #define BAUDRATE 9600
+#define BLUETOOTH_REPORT_COMMAND 43383828 // GETDATA
 
 /******************** DECLARACION MAQUINA DE ESTADOS *********************/
 enum enum_states
@@ -188,7 +189,7 @@ void loop()
   if (BTserial.available())
   {
     serial_msg = BTserial.read();
-    if (serial_msg == "GET_DATA")
+    if ((int)serial_msg == BLUETOOTH_REPORT_COMMAND)
     {
       send_sensors_data_to_btserial();
     }
