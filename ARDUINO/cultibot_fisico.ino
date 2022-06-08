@@ -188,7 +188,14 @@ void loop()
   if (BTserial.available())
   {
     serial_msg = BTserial.read();
-    Serial.write(serial_msg);
+    if (serial_msg == "GET_DATA")
+    {
+      send_sensors_data_to_btserial();
+    }
+    else
+    {
+      Serial.write(serial_msg);
+    }
   }
   if (Serial.available())
   {
@@ -380,6 +387,15 @@ int get_cooler_intensity(int temperature)
   return COOLER_25;
 }
 
+void send_sensors_data_to_btserial()
+{
+  // Envio de datos a la serial BT
+  BTserial.write("Sensores: ");
+  BTserial.write(event.temperature);
+  BTserial.write(event.light);
+  BTserial.write(event.humidity);
+}
+
 // <------------------------- MAQUINA DE ESTADOS ------------------------->
 
 void ini()
@@ -494,6 +510,8 @@ void adecuate()
   {
     turn_on_triggers();
   }
+
+  send_sensors_data_to_btserial();
 }
 
 void idle_again()
