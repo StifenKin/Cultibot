@@ -1,25 +1,25 @@
 
 // Habilitacion de debug para la impresion por el puerto serial ...
 //----------------------------------------------
-#define SERIAL_DEBUG_ENABLED 1
+#define SERIAL_DEBUG_ENABLED 0
 
 #if SERIAL_DEBUG_ENABLED
-#define DebugPrint(str)  \
-  {                      \
-    Serial.println(str); \
-  }
+#define DebugPrint(str)      \
+    {                        \
+        Serial.println(str); \
+    }
 #else
 #define DebugPrint(str)
 #endif
 
-#define DebugPrintEstado(state, event)                          \
-  {                                                             \
-    String est = state;                                         \
-    String evt = event;                                         \
-    String str;                                                 \
-    str = "STATE-> [" + est + "]: " + "EVENT-> [" + evt + "]."; \
-    DebugPrint(str);                                            \
-  }
+#define DebugPrintEstado(state, event)                              \
+    {                                                               \
+        String est = state;                                         \
+        String evt = event;                                         \
+        String str;                                                 \
+        str = "STATE-> [" + est + "]: " + "EVENT-> [" + evt + "]."; \
+        DebugPrint(str);                                            \
+    }
 //----------------------------------------------
 
 // <-------------------------LIBRERIAS------------------------->
@@ -39,7 +39,7 @@
 
 /********************************* ACTUADORES *********************************/
 #define WATER_LED_PIN 2
-#define COOLER_TRANSISTOR_PIN 9
+#define COOLER_TRANSISTOR_PIN 5
 #define LIGHTBULB_TRANSISTOR_PIN 3
 
 /***************************** UMBRALES GENERALES *****************************/
@@ -57,9 +57,6 @@
 #define COOLER_50 128
 #define COOLER_75 192
 #define COOLER_100 255
-
-//#define TEMP_SENSOR_PIN_CONST 0.48828125
-//#define TEMP_SENSOR_PIN_CONST2 50
 
 /*************************** UMBRALES PARTICULARES ****************************/
 #define CRITIC_HIGH_TEMP_100 100
@@ -91,26 +88,27 @@
 #define PIN_SERIAL_BLUETOOTH_RX 10
 #define PIN_SERIAL_BLUETOOTH_TX 11
 #define BAUDRATE 9600
-// #define BLUETOOTH_REPORT_COMMAND 43383828 // GETDATA
+#define BLUETOOTH_REPORT_COMMAND "GET"
+#define BUFFER_SIZE 50
 
 /******************** DECLARACION MAQUINA DE ESTADOS *********************/
 enum enum_states
 {
-  INITIAL,
-  IDLE,
-  MONITORING,
-  EVALUATING,
-  ADECUATING
+    INITIAL,
+    IDLE,
+    MONITORING,
+    EVALUATING,
+    ADECUATING
 };
 String states[] = {"INITIAL", "IDLE", "MONITORING", "EVALUATING", "ADECUATING"};
 
 enum enum_events
 {
-  CONTINUE,
-  MONITOR_NEEDED,
-  MONITORED,
-  EVALUATED,
-  ADECUATED
+    CONTINUE,
+    MONITOR_NEEDED,
+    MONITORED,
+    EVALUATED,
+    ADECUATED
 };
 String events[] = {"CONTINUE", "MONITOR_NEEDED", "MONITORED", "EVALUATED", "ADECUATED"};
 
@@ -140,13 +138,13 @@ transition transitions[STATES][EVENTS] = {
 
 typedef struct
 {
-  int type;
-  int light;
-  float temperature;
-  float humidity;
-  bool light_ok;
-  bool temperature_ok;
-  bool humidity_ok;
+    int type;
+    int light;
+    float temperature;
+    float humidity;
+    bool light_ok;
+    bool temperature_ok;
+    bool humidity_ok;
 } struct_event;
 
 int state;
@@ -173,292 +171,306 @@ bool timeout;
 
 void setup()
 {
-  // Inicializacion del sw
-  ini();
+    // Inicializacion del sw
+    ini();
 
-  // Inicialización de los contadores para el timer por hw
-  TCCR1A = REGISTRO_TCCR1A;
-  TCCR1B = REGISTRO_TCCR1B;
-  OCR1A = REGISTRO_OCR1A;
-  TIMSK1 = bit(OCIE1A);
-  sei();
+    // Inicialización de los contadores para el timer por hw
+    TCCR1A = REGISTRO_TCCR1A;
+    TCCR1B = REGISTRO_TCCR1B;
+    OCR1A = REGISTRO_OCR1A;
+    TIMSK1 = bit(OCIE1A);
+    sei();
 }
 
 void loop()
 {
-  if (BTserial.available())
-  {
-    serial_msg = BTserial.read();
-    // if ((int)serial_msg == BLUETOOTH_REPORT_COMMAND)
-    // {
-    //   send_sensors_data_to_btserial();
-    // }
-    // else
-    // {
-    Serial.write(serial_msg);
-    // }
-  }
-  if (Serial.available())
-  {
-    serial_msg = Serial.read();
-    Serial.write(serial_msg);
-    BTserial.write(serial_msg);
-  }
-  finite_state_machine();
+    if (BTserial.available())
+    {
+        serial_msg = BTserial.read();
+        if (String(serial_msg) == String(BLUETOOTH_REPORT_COMMAND))
+        {
+            send_sensors_data_to_btserial();
+        }
+        else
+        {
+            Serial.write(serial_msg);
+        }
+    }
+    if (Serial.available())
+    {
+        serial_msg = Serial.read();
+        Serial.write(serial_msg);
+        BTserial.write(serial_msg);
+    }
+
+    finite_state_machine();
 }
 
 ISR(TIMER1_COMPA_vect)
 {
-  if (software_timer_counter > 20)
-  {
-    timeout = true;
-    software_timer_counter = 0;
-  }
-  else
-  {
-    software_timer_counter++;
-  }
+    if (software_timer_counter >= LIMIT_SOFTWARE_TEMP)
+    {
+        timeout = true;
+        software_timer_counter = 0;
+    }
+    else
+    {
+        software_timer_counter++;
+    }
 }
 
 // <-------------------------FUNCIONES SENSORES------------------------->
 
 float read_temperature()
 {
-  // Lectura y cálculo para obtener la temperatura del ambiente
-  float current_temperature = dht.readTemperature();
+    // Lectura y cálculo para obtener la temperatura del ambiente
+    float current_temperature = dht.readTemperature();
 
-  // Reviso si todo esta ok al leer
-  if (isnan(current_temperature))
-  {
-    //    DebugPrint("Error al obtener temperatura del DHT11");
-    //    return prev_temp;
-    return 18;
-  }
-  else
-  {
-    // DEBUG
-    DebugPrint("Temperatura leida por el DHT11: ");
-    DebugPrint(current_temperature);
-  }
+    // Reviso si todo esta ok al leer
+    if (isnan(current_temperature))
+    {
+        DebugPrint("Error al obtener temperatura del DHT11");
+        return prev_temp;
+    }
 
-  return current_temperature;
-
-  /** PREVIA LECTURA DE TEMPERATURA (EN TINKERCAD)
-   * int temp_value = analogRead(sensor);
-   *  return TEMP_SENSOR_PIN_CONST * temp_value - TEMP_SENSOR_PIN_CONST2;
-   */
+    return current_temperature;
 }
 
 float read_humidity()
 {
-  // Lectura de la humedad del ambiente
-  float current_humidity = dht.readHumidity();
+    // Lectura de la humedad del ambiente
+    float current_humidity = dht.readHumidity();
 
-  // Reviso si todo esta ok al leer
-  if (isnan(current_humidity))
-  {
-    DebugPrint("Error al obtener humedad del DHT11");
-    //    return prev_humidity;
-    return 95;
-  }
-  else
-  {
-    // DEBUG
-    DebugPrint("Humedad leida por el DHT11: ");
-    DebugPrint(current_humidity);
-  }
+    // Reviso si todo esta ok al leer
+    if (isnan(current_humidity))
+    {
+        DebugPrint("Error al obtener humedad del DHT11");
+        return prev_humidity;
+    }
+    else
+    {
+        // DEBUG
+        DebugPrint("Humedad leida por el DHT11: ");
+        DebugPrint(current_humidity);
+    }
 
-  return current_humidity;
-  /** PREVIA LECTURA DE HUMEDAD (EN TINKERCAD)
-   *  return digitalRead(sensor);
-   */
+    return current_humidity;
 }
 
 int read_light(int sensor)
 {
-  // Realizamos un mapeo para tener el porcentaje de luz recibido
-  int current_light = analogRead(sensor);
+    // Realizamos un mapeo para tener el porcentaje de luz recibido
+    int current_light = analogRead(sensor);
 
-  // Reviso si todo esta ok al leer
-  if (isnan(current_light))
-  {
-    DebugPrint("Error al obtener luz del DHT11");
-    return prev_light;
-  }
-  else
-  {
-    // DEBUG
-    DebugPrint("Luz leida por el fotosensor: ");
-    DebugPrint(map(current_light, LIGHT_MIN_VALUE, LIGHT_MAX_VALUE, MIN_VALUE, MAX_VALUE));
-  }
+    // Reviso si todo esta ok al leer
+    if (isnan(current_light))
+    {
+        DebugPrint("Error al obtener luz del DHT11");
+        return prev_light;
+    }
+    else
+    {
+        // DEBUG
+        DebugPrint("Luz leida por el fotosensor: ");
+        DebugPrint(map(current_light, LIGHT_MIN_VALUE, LIGHT_MAX_VALUE, MIN_VALUE, MAX_VALUE));
+    }
 
-  return map(current_light, LIGHT_MIN_VALUE, LIGHT_MAX_VALUE, MIN_VALUE, MAX_VALUE);
+    return map(current_light, LIGHT_MIN_VALUE, LIGHT_MAX_VALUE, MIN_VALUE, MAX_VALUE);
 }
 
 bool check_temperature()
 {
-  // Falso si la temperatura esta en la region critica
-  return event.temperature > CRITIC_LOW_TEMP && event.temperature < CRITIC_HIGH_TEMP_25;
+    // Falso si la temperatura esta en la region critica
+    return event.temperature > CRITIC_LOW_TEMP && event.temperature < CRITIC_HIGH_TEMP_25;
 }
 
 bool check_light()
 {
-  // Falso si se tiene un nivel de luz bajo
-  return event.light > CRITIC_LOW_LIGHT;
+    // Falso si se tiene un nivel de luz bajo
+    return event.light > CRITIC_LOW_LIGHT;
 }
 
 bool check_humidity()
 {
-  // Falso si se tiene un nivel de humedad bajo
-  return event.humidity > CRITIC_LOW_HUMIDITY;
+    // Falso si se tiene un nivel de humedad bajo
+    return event.humidity > CRITIC_LOW_HUMIDITY;
 }
 
 void turn_off_triggers()
 {
-  // Para indicar que se adecuo las condiciones ambientales
-  event.type = ADECUATED;
-  digitalWrite(LIGHTBULB_TRANSISTOR_PIN, LOW);
-  digitalWrite(WATER_LED_PIN, LOW);
-  analogWrite(COOLER_TRANSISTOR_PIN, COOLER_OFF);
+    // Para indicar que se adecuo las condiciones ambientales
+    event.type = ADECUATED;
+    digitalWrite(LIGHTBULB_TRANSISTOR_PIN, LOW);
+    digitalWrite(WATER_LED_PIN, LOW);
+    analogWrite(COOLER_TRANSISTOR_PIN, COOLER_OFF);
 }
 
 void turn_on_triggers()
 {
-  if (!event.humidity_ok)
-  {
-    digitalWrite(WATER_LED_PIN, HIGH);
-  }
-  else
-  {
-    digitalWrite(WATER_LED_PIN, LOW);
-  }
-
-  if (event.temperature > CRITIC_HIGH_TEMP_25)
-  {
-    DebugPrint("Estoy prendiendo el ventilador");
-    int cooler_intensity = get_cooler_intensity(event.temperature);
-    analogWrite(COOLER_TRANSISTOR_PIN, cooler_intensity);
-  }
-  else
-  {
-    DebugPrint("Estoy apagando el ventilador");
-    analogWrite(COOLER_TRANSISTOR_PIN, COOLER_OFF);
-
-    if (event.temperature < CRITIC_LOW_TEMP)
+    if (!event.humidity_ok)
     {
-      digitalWrite(LIGHTBULB_TRANSISTOR_PIN, HIGH);
+        digitalWrite(WATER_LED_PIN, HIGH);
     }
     else
     {
-      digitalWrite(LIGHTBULB_TRANSISTOR_PIN, LOW);
+        digitalWrite(WATER_LED_PIN, LOW);
     }
-  }
 
-  // Segun el estado de los sensores se apagan o se prenden
-  if (!event.light_ok)
-  {
-    digitalWrite(LIGHTBULB_TRANSISTOR_PIN, HIGH);
-  }
-  else
-  {
-    // Solo apago la luz si NO la prendi por temperatura previamente
-    int newVal = (event.temperature < CRITIC_LOW_TEMP) ? HIGH : LOW;
-    digitalWrite(LIGHTBULB_TRANSISTOR_PIN, newVal);
-  }
+    if (event.temperature > CRITIC_HIGH_TEMP_25)
+    {
+        DebugPrint("Estoy prendiendo el ventilador");
+        int cooler_intensity = get_cooler_intensity(event.temperature);
+        analogWrite(COOLER_TRANSISTOR_PIN, cooler_intensity);
+    }
+    else
+    {
+        DebugPrint("Estoy apagando el ventilador");
+        analogWrite(COOLER_TRANSISTOR_PIN, COOLER_OFF);
 
-  // Para indicar que se adecuo las condiciones ambientales
-  event.type = ADECUATED;
+        if (event.temperature < CRITIC_LOW_TEMP)
+        {
+            digitalWrite(LIGHTBULB_TRANSISTOR_PIN, HIGH);
+        }
+        else
+        {
+            digitalWrite(LIGHTBULB_TRANSISTOR_PIN, LOW);
+        }
+    }
+
+    // Segun el estado de los sensores se apagan o se prenden
+    if (!event.light_ok)
+    {
+        digitalWrite(LIGHTBULB_TRANSISTOR_PIN, HIGH);
+    }
+    else
+    {
+        // Solo apago la luz si NO la prendi por temperatura previamente
+        int newVal = (event.temperature < CRITIC_LOW_TEMP) ? HIGH : LOW;
+        digitalWrite(LIGHTBULB_TRANSISTOR_PIN, newVal);
+    }
+
+    // Para indicar que se adecuo las condiciones ambientales
+    event.type = ADECUATED;
 }
 
 int get_cooler_intensity(int temperature)
 {
-  // Calculo de la intensidad del cooler
-  if (temperature > CRITIC_HIGH_TEMP_100)
-  {
-    return COOLER_100;
-  }
-  if (temperature > CRITIC_HIGH_TEMP_75)
-  {
-    return COOLER_75;
-  }
-  if (temperature > CRITIC_HIGH_TEMP_50)
-  {
-    return COOLER_50;
-  }
-  return COOLER_25;
+    // Calculo de la intensidad del cooler
+    if (temperature > CRITIC_HIGH_TEMP_100)
+    {
+        return COOLER_100;
+    }
+    if (temperature > CRITIC_HIGH_TEMP_75)
+    {
+        return COOLER_75;
+    }
+    if (temperature > CRITIC_HIGH_TEMP_50)
+    {
+        return COOLER_50;
+    }
+
+    return COOLER_25;
 }
 
 void send_sensors_data_to_btserial()
 {
-  // Envio de datos a la serial BT
-  BTserial.write("Sensores: ");
-  BTserial.write(event.temperature);
-  BTserial.write(event.light);
-  BTserial.write(event.humidity);
+    char buffer[BUFFER_SIZE];
+
+    String temperature = String((int)event.temperature);
+    String light = String(event.light);
+    String humidity = String((int)event.humidity);
+    String SEPARATOR = ";";
+    String END_OF_LINE = "#";
+
+    String sensors = temperature + SEPARATOR + light + SEPARATOR + humidity + END_OF_LINE;
+
+    if (SERIAL_DEBUG_ENABLED)
+    {
+        // Envio de datos a la serial BT
+        temperature.toCharArray(buffer, BUFFER_SIZE);
+        BTserial.println(buffer);
+        BTserial.flush();
+        delay(10);
+
+        light.toCharArray(buffer, BUFFER_SIZE);
+        BTserial.println(buffer);
+        BTserial.flush();
+        delay(10);
+
+        humidity.toCharArray(buffer, BUFFER_SIZE);
+        BTserial.println(buffer);
+        BTserial.println(' ');
+    }
+    else
+    {
+        sensors.toCharArray(buffer, BUFFER_SIZE);
+        BTserial.println(buffer);
+        BTserial.flush();
+    }
 }
 
 // <------------------------- MAQUINA DE ESTADOS ------------------------->
 
 void ini()
 {
-  Serial.begin(BAUDRATE);
-  BTserial.begin(BAUDRATE);
-  // Inicializacion de los pines
-  pinMode(LIGHT_SENSOR_PIN, INPUT);
-  pinMode(DHT11_PIN, INPUT);
-  pinMode(LIGHTBULB_TRANSISTOR_PIN, OUTPUT);
-  pinMode(COOLER_TRANSISTOR_PIN, OUTPUT); // Pin como salida digital para PWM
-  pinMode(WATER_LED_PIN, OUTPUT);
-  dht.begin();
-  // Inicializacion de variables en valores imposibles
+    Serial.begin(BAUDRATE);
+    BTserial.begin(BAUDRATE);
+    // Inicializacion de los pines
+    pinMode(LIGHT_SENSOR_PIN, INPUT);
+    pinMode(DHT11_PIN, INPUT);
+    pinMode(LIGHTBULB_TRANSISTOR_PIN, OUTPUT);
+    pinMode(COOLER_TRANSISTOR_PIN, OUTPUT); // Pin como salida digital para PWM
+    pinMode(WATER_LED_PIN, OUTPUT);
+    dht.begin();
+    // Inicializacion de variables en valores imposibles
 
-  // Sensores toman valores imposibles como iniciales
-  prev_temp = INITIAL_TEMP;
-  prev_light = INITIAL_LIGHT;
-  prev_humidity = INITIAL_HUMIDITY;
+    // Sensores toman valores imposibles como iniciales
+    prev_temp = INITIAL_TEMP;
+    prev_light = INITIAL_LIGHT;
+    prev_humidity = INITIAL_HUMIDITY;
 
-  timeout = false;
-  state = INITIAL;
-  event.type = CONTINUE;
+    timeout = false;
+    state = INITIAL;
+    event.type = CONTINUE;
 }
 
 void check_if_monitor_is_needed()
 {
-  // Solo para verificar si ocurrio la interrupcion.
-  if (timeout)
-  {
-    timeout = false;
-    event.type = MONITOR_NEEDED;
-  }
-  else
-  {
-    event.type = CONTINUE;
-  }
+    // Solo para verificar si ocurrio la interrupcion.
+    if (timeout)
+    {
+        timeout = false;
+        event.type = MONITOR_NEEDED;
+    }
+    else
+    {
+        event.type = CONTINUE;
+    }
 }
 
 bool is_valid_transition(int event, int state)
 {
-  return (event >= 0) && (event < EVENTS) && (state >= 0) && (state < STATES);
+    return (event >= 0) && (event < EVENTS) && (state >= 0) && (state < STATES);
 }
 
 void finite_state_machine()
 {
-  if (!is_valid_transition(event.type, state))
-  {
-    DebugPrint("Error al transicionar de estados");
-    return;
-  }
+    if (!is_valid_transition(event.type, state))
+    {
+        DebugPrint("Error al transicionar de estados");
+        return;
+    }
 
-  if (event.type != CONTINUE)
-  {
-    //        DebugPrintEstado(states[event.type], events[state]);
-  }
-  transitions[state][event.type]();
+    if (event.type != CONTINUE)
+    {
+        // DebugPrintEstado(states[event.type], events[state]);
+    }
+    transitions[state][event.type]();
 }
 
 void init_()
 {
-  state = IDLE;
+    state = IDLE;
 }
 
 void none()
@@ -467,60 +479,60 @@ void none()
 
 void wait()
 {
-  check_if_monitor_is_needed();
+    check_if_monitor_is_needed();
 }
 
 void monitor_plant()
 {
-  check_if_monitor_is_needed();
+    check_if_monitor_is_needed();
 
-  // Se dispara la lectura de los sensores
-  state = MONITORING;
+    // Se dispara la lectura de los sensores
+    state = MONITORING;
 
-  event.light = read_light(LIGHT_SENSOR_PIN);
-  event.temperature = read_temperature();
-  event.humidity = read_humidity();
+    event.light = read_light(LIGHT_SENSOR_PIN);
+    event.temperature = read_temperature();
+    event.humidity = read_humidity();
 
-  // Para indicar que se realizo el senseo
-  event.type = MONITORED;
+    // Para indicar que se realizo el senseo
+    event.type = MONITORED;
 }
 
 void monitored_plant()
 {
-  // Con este evento se dispara la verificacion de los valores obtenidos
-  state = EVALUATING;
+    // Con este evento se dispara la verificacion de los valores obtenidos
+    state = EVALUATING;
 
-  event.light_ok = check_light();
-  event.temperature_ok = check_temperature();
-  event.humidity_ok = check_humidity();
+    event.light_ok = check_light();
+    event.temperature_ok = check_temperature();
+    event.humidity_ok = check_humidity();
 
-  // Para indicar que se realizo la verificacion de datos
-  event.type = EVALUATED;
+    // Para indicar que se realizo la verificacion de datos
+    event.type = EVALUATED;
 }
 
 void adecuate()
 {
-  state = ADECUATING;
+    state = ADECUATING;
 
-  // Con este evento se dispara la actualizacion de los actuadores
-  if (event.temperature_ok && event.light_ok && event.humidity_ok)
-  {
-    turn_off_triggers();
-  }
-  else
-  {
-    turn_on_triggers();
-  }
+    // Con este evento se dispara la actualizacion de los actuadores
+    if (event.temperature_ok && event.light_ok && event.humidity_ok)
+    {
+        turn_off_triggers();
+    }
+    else
+    {
+        turn_on_triggers();
+    }
 
-  // send_sensors_data_to_btserial();
+    send_sensors_data_to_btserial();
 }
 
 void idle_again()
 {
-  state = IDLE;
+    state = IDLE;
 }
 
 void error()
 {
-  DebugPrint("Ocurrio un error en la transicion de estados.")
+    DebugPrint("Ocurrio un error en la transicion de estados.")
 }
