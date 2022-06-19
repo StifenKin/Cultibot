@@ -1,33 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.dashboardview">
+    package="com.example.cultibot">
+
+    <!-- Permisos necesarios para utilizar la app  -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/icon"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/icon"
         android:supportsRtl="true"
-        android:theme="@style/Theme.DashboardView"
+        android:theme="@style/Theme.Cultibot"
         tools:targetApi="31">
+
+        <!--- Activity donde se aterriza una vez abierta la app, sirve como login -->
         <activity
             android:name=".LoginActivity"
             android:exported="true"
-            android:label="Cultibot">
+            android:label="@string/labelLoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--- Activity principal, actua como indice para moverse por la app -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:label="@string/labelMainActivity"
+            android:exported="true" />
 
+        <!--- Activity donde la informacion de los sensores es mostrada en pantalla -->
+        <activity
+            android:name=".SensorsActivity"
+            android:exported="false"
+            android:label="@string/labelSensorsActivity"
+            android:theme="@style/Theme.Cultibot.NoActionBar" />
+
+        
+        <!--- Activity con el listado de dispositivos Bluethoot (des)conectados -->
+        <activity
+            android:name=".DeviceListActivity"
+            android:label="@string/labelDeviceListActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Cultibot.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
         </activity>
+
+        <!--- Service encargado de la comunicacion por medio de bluetooth con el arduino -->
+        <service
+            android:name=".BlueToothService"
+            android:exported="false" />
+
     </application>
 
 </manifest>
