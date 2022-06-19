@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SensorsActivity">
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/statusText"
+        android:textSize="22sp"
+        app:layout_constraintBottom_toTopOf="@+id/temperatureText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/temperatureText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/temperatureText"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/lightText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/statusText" />
+
+    <TextView
+        android:id="@+id/temperatureValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/temp"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/temperatureText" />
+
+    <TextView
+    android:id="@+id/lightText"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="@string/lightText"
+    android:textSize="16sp"
+    app:layout_constraintBottom_toTopOf="@+id/humidityText"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintHorizontal_bias="0.503"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/temperatureText" />
+
+    <TextView
+        android:id="@+id/lightValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/light"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/lightText" />
+
+
+    <TextView
+        android:id="@+id/humidityText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/humidityText"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/refreshButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/lightText" />
+
+    <TextView
+        android:id="@+id/humidityValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/hum"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/humidityText" />
+
+    <Button
+        android:id="@+id/refreshButton"
+        style="@style/Widget.AppCompat.Button"
+        android:layout_width="178dp"
+        android:layout_height="74dp"
+        android:background="#953F3F"
+        android:text="@string/refreshButton"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/humidityText"
+        app:rippleColor="#EC0D0D" />
+
+    <Button
+        android:id="@+id/backButton"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="135dp"
+        android:layout_height="64dp"
+        android:background="#BAB7B7"
+        android:text="@string/backButton"
+        android:onClick="gotoMainActivity"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/refreshButton"
+        app:rippleColor="#DD0F0F" />
+
+</androidx.constraintlayout.widget.ConstraintLayout >
