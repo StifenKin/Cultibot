@@ -25,7 +25,7 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
     private static final String LOG_TAG = "SENSORS";
     // MAC ADDRESS BT
     private static String address = null;
-
+    private boolean waterLedPin = false;
     private final int UPDATING_STATUS = 1000;
     private final int UPDATED_STATUS = 1001;
 
@@ -61,7 +61,7 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
         mySensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
         // Boton que muestra el listado de los sensores disponibles
-        refreshButton.setOnClickListener(v -> updateStatus(UPDATING_STATUS));
+        refreshButton.setOnClickListener(v -> toggleWaterLedPin());
 
         // Hardcodeo de sensores
         temperatureValue.setTypeface(temperatureValue.getTypeface(), Typeface.BOLD);
@@ -76,9 +76,18 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
 
         //se especifica que mensajes debe aceptar el broadcastreceiver
         IntentFilter filter = new IntentFilter();
-        filter.addAction(BlueToothService.ACTION_MAIN_MENU);
+        filter.addAction(BlueToothService.ACTION_REPORT);
+        filter.addAction(BlueToothService.ACTION_WATER);
         rcv = new ProgressReceiver();
         registerReceiver(rcv, filter);
+    }
+
+    private void toggleWaterLedPin() {
+        waterLedPin = !waterLedPin;
+        Intent msgIntent = new Intent(SensorsActivity.this, BlueToothService.class);
+        msgIntent.putExtra(getString(R.string.BluetoothAddressIntentKey), address);
+        msgIntent.putExtra(getString(R.string.CommandIntentKey), getString(R.string.BLUETOOTH_WATER_COMMAND) );
+        startService(msgIntent);
     }
 
     protected void ini_sensor()
@@ -113,7 +122,7 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
                 }
                 Intent msgIntent = new Intent(SensorsActivity.this, BlueToothService.class);
                 msgIntent.putExtra(getString(R.string.BluetoothAddressIntentKey), address);
-                msgIntent.putExtra(getString(R.string.CommandIntentKey), "GET");
+                msgIntent.putExtra(getString(R.string.CommandIntentKey), getString(R.string.BLUETOOTH_REPORT_COMMAND) );
                 startService(msgIntent);
 
                 statusText.setText(R.string.updatingStatusText);
@@ -194,10 +203,13 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(intent.getAction().equals(BlueToothService.ACTION_MAIN_MENU)) {
+            if(intent.getAction().equals(BlueToothService.ACTION_REPORT)) {
                 Bundle extras = intent.getExtras();
                 String sensorsData = extras.getString(getString(R.string.SensorsDataIntentKey));
                 formatData(sensorsData);
+            }
+            else if (intent.getAction().equals(BlueToothService.ACTION_WATER)) {
+                showToast(getApplicationContext(), getString(R.string.waterSuccessMsg));
             }
             else {
                 showToast(getApplicationContext(), getString(R.string.dataFetchFailure));

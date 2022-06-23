@@ -19,7 +19,8 @@ import java.util.UUID;
 
 public class BlueToothService extends IntentService implements ToastInterface{
     private static final String LOG_TAG = "BT_SERVICE";
-    public static final String ACTION_MAIN_MENU = "com.example.cultibot.intent.action.MAIN";
+    public static final String ACTION_REPORT = "com.example.cultibot.intent.action.REPORT";
+    public static final String ACTION_WATER = "com.example.cultibot.intent.action.WATER";
 
     // SPP UUID service  - Funciona en la mayoria de los dispositivos
     private static final UUID BT_MODULE_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
@@ -47,7 +48,9 @@ public class BlueToothService extends IntentService implements ToastInterface{
 
         Intent bcIntent = new Intent();
         if (command.contains(getString(R.string.BLUETOOTH_REPORT_COMMAND)))
-            bcIntent.setAction(ACTION_MAIN_MENU);
+            bcIntent.setAction(ACTION_REPORT);
+        else if(command.contains(getString(R.string.BLUETOOTH_WATER_COMMAND)))
+            bcIntent.setAction(ACTION_WATER);
 
         bcIntent.putExtra(getString(R.string.SensorsDataIntentKey), data);
         sendBroadcast(bcIntent);
@@ -78,26 +81,27 @@ public class BlueToothService extends IntentService implements ToastInterface{
             // Se realiza la conexion del Bluethoot crea y se conectandose a atraves de un socket
             try {
                 btSocket = createBluetoothSocket(device);
+
+                try {
+                    btSocket.connect();
+                } catch (IOException e) {
+                    showToast(getApplicationContext(), getString(R.string.socketConnectionFailure));
+                    try {
+                        btSocket.close();
+                    } catch (IOException e2) {
+                        showToast(getApplicationContext(), getString(R.string.socketDesconnectionFailure));
+                    }
+                }
+
+                // Una establecida la conexion con el Hc05 se crea el hilo secundario, el cual va a
+                // recibir los datos de Arduino atraves del bluetooth
+                mConnectedThread = new ConnectedThread(btSocket);
+                mConnectedThread.start();
+                Log.i(LOG_TAG, "Thread " + mConnectedThread.getName() + " creado exitosamente."); // DEBUG
+
             } catch (IOException e) {
                 showToast(getApplicationContext(), getString(R.string.socketCreationFailure));
             }
-            // Establish the Bluetooth socket connection.
-            try {
-                btSocket.connect();
-            } catch (IOException e) {
-                showToast(getApplicationContext(), getString(R.string.socketConnectionFailure));
-                try {
-                    btSocket.close();
-                } catch (IOException e2) {
-                    showToast(getApplicationContext(), getString(R.string.socketDesconnectionFailure));
-                }
-            }
-
-            //Una establecida la conexion con el Hc05 se crea el hilo secundario, el cual va a recibir
-            // los datos de Arduino atraves del bluethoot
-            mConnectedThread = new ConnectedThread(btSocket);
-            mConnectedThread.start();
-            Log.i(LOG_TAG, "Thread " + mConnectedThread.getName() + " creado exitosamente."); // DEBUG
         }
 
         mConnectedThread.write(command);

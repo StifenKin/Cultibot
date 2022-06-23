@@ -4,7 +4,8 @@
     <string name="backButton">Volver</string>
     <string name="BluetoothAddressIntentKey">BTAddress</string>
     <string name="SensorsDataIntentKey">SENSORS_DATA</string>
-    <string name="BLUETOOTH_REPORT_COMMAND">GET</string>
+    <string name="BLUETOOTH_REPORT_COMMAND">G</string>
+    <string name="BLUETOOTH_WATER_COMMAND">P</string>
     <string name="CommandIntentKey">COMMAND</string>
 
     <!-- Activities Labels -->
@@ -15,10 +16,10 @@
 
     <!-- Login Activity -->
     <string name="welcomeText">¡Bienvenido!</string>
-    <string name="inputDate">Fecha de nacimiento (dd/mm/aaaa)</string>
+    <string name="inputDate">Fecha de nacimiento</string>
     <string name="inputName">Nombre</string>
     <string name="submitButton">Ingresar</string>
-    <string name="invalidDate">Ingrese una fecha valida (dd/mm/AAAA)!</string>
+    <string name="invalidDate">Ingrese una fecha valida (dd/mm/AAAA)</string>
     <string name="errorText">MENSAJE DE ERROR</string>
 
     <!-- Main Activity -->
@@ -31,7 +32,7 @@
     <string name="temperatureText">Temperatura</string>
     <string name="lightText">Luminosidad</string>
     <string name="humidityText">Humedad</string>
-    <string name="refreshButton">Refrescar</string>
+    <string name="refreshButton">Riego</string>
     <string name="updatingStatusText">Obteniendo data de sensores…</string>
     <string name="statusUpdateFailure">Error al actualizar estado!</string>
     <string name="updatedStatusText">Actualizado</string>
@@ -43,14 +44,14 @@
     <!-- DeviceList Activity -->
     <string name="deviceListMainText">Lista de dispositivos</string>
     <string name="btnFindDevices">Buscar Dispositivos</string>
-    <string name="btn_pair">Emparejar</string>
-    <string name="pairedDevice">Emparejado</string>
-    <string name="deviceUnpaired">No emparejado</string>
+    <string name="pairedDevice">Dispositivo conectado</string>
+    <string name="deviceUnpaired">Dispositivo desconectado</string>
     <string name="pairText">Conectar</string>
     <string name="unpairText">Desconectar</string>
-    <string name="bluetoothNotSupported">Bluetooth no es soportado por el dispositivo movil.</string>
-    <string name="bluetoothDisabled">Bluetooth deshabilitado.</string>
-    <string name="bluetoothEnabled">Bluetooth habilitado.</string>
+    <string name="bluetoothNotSupported">Bluetooth no soportado por el dispositivo</string>
+    <string name="bluetoothDisabled">Bluetooth deshabilitado</string>
+    <string name="bluetoothEnabled">Bluetooth habilitado</string>
+    <string name="pairingText">Conectando…</string>
 
     <!-- BLuetooth Service -->
     <string name="socketCreationFailure">Fallo la creación del socket.</string>
@@ -58,6 +59,7 @@
     <string name="socketDesconnectionFailure">Fallo la desconexion del socket.</string>
     <string name="IOStreamFailure">Imposible establecer canal de comunicacion!</string>
     <string name="OutStreamWriteFailure">Ocurrio un error al comunicarse con el HC05</string>
+    <string name="waterSuccessMsg">Planta regada exitosamente</string>
 
 
 </resources>

@@ -18,12 +18,12 @@ import android.widget.ListView;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 /***************************************************************************************************
  * Activity que muestra el listado de los dispositivos Bluetooth (des)conectados
  **************************************************************************************************/
 
-@SuppressWarnings("ALL")
 public class DeviceListActivity extends Activity implements ToastInterface {
     private static final String LOG_TAG = "DEVICE_LIST";
     private ListView myListView;
@@ -49,22 +49,22 @@ public class DeviceListActivity extends Activity implements ToastInterface {
 
         myDeviceList = new ArrayList<>();
 
-        //Se crea un adaptador para poder manejar el bluethoot del celular
+        //Se crea un adaptador para poder manejar el Bluetooth del celular
         myBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        // Se determina si existe bluethoot en el celular
+        // Se determina si existe Bluetooth en el celular
         checkIfBluetoothEnabled();
 
         btnFind.setOnClickListener(btnBuscarListener);
 
         // myBluetoothAdapter.startDiscovery();
 
-        //Se Crea la ventana de dialogo que indica que se esta buscando dispositivos bluethoot
-        myProgressDialog = new ProgressDialog(getApplicationContext());
+        //Se Crea la ventana de dialogo que indica que se esta buscando dispositivos Bluetooth
+        myProgressDialog = new ProgressDialog(DeviceListActivity.this);
 
         myProgressDialog.setMessage("Buscando dispositivos...");
         myProgressDialog.setCancelable(false);
-        //se asocia un listener al boton cancelar para la ventana de dialogo ue busca los dispositivos bluethoot
+        //se asocia un listener al boton cancelar para la ventana de dialogo ue busca los dispositivos Bluetooth
         myProgressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancelar", btnCancelarDialogListener);
 
 
@@ -82,16 +82,14 @@ public class DeviceListActivity extends Activity implements ToastInterface {
         // Se definen un broadcastReceiver que captura el broadcast del SO cuando captura los siguientes eventos:
         IntentFilter filter = new IntentFilter();
 
-        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);      // Cambia el estado del Bluethoot (Acrtivado /Desactivado)
-        filter.addAction(BluetoothDevice.ACTION_FOUND);               // Se encuentra un dispositivo bluethoot al realizar una busqueda
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);  // Cuando se comienza una busqueda de bluethoot
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED); // Cuando la busqueda de bluethoot finaliza
-        filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);  // Cuando se empareja o desempareja el bluethoot
+        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);      // Cambia el estado del Bluetooth (Acrtivado /Desactivado)
+        filter.addAction(BluetoothDevice.ACTION_FOUND);               // Se encuentra un dispositivo Bluetooth al realizar una busqueda
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);  // Cuando se comienza una busqueda de Bluetooth
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED); // Cuando la busqueda de Bluetooth finaliza
+        filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);  // Cuando se empareja o desempareja el Bluetooth
 
         //se define (registra) el handler que captura los broadcast anterirmente mencionados.
         registerReceiver(bluetoothReceiver, filter);
-
-        Log.i(LOG_TAG, "Se logea desde el onCreate method");
     }
 
     private final View.OnClickListener btnBuscarListener = new View.OnClickListener() {
@@ -99,14 +97,12 @@ public class DeviceListActivity extends Activity implements ToastInterface {
         @Override
         public void onClick(View v) {
             myBluetoothAdapter.startDiscovery();
-            btnFind.setEnabled(false);
-            Log.i(LOG_TAG,"Se logea desde el onClick del boton de Buscar");
         }
     };
 
     @SuppressLint("MissingPermission")
     @Override
-    //Cuando se llama al metodo OnPausa se cancela la busqueda de dispositivos bluethoot
+    //Cuando se llama al metodo OnPausa se cancela la busqueda de dispositivos Bluetooth
     public void onPause()
     {
         if (myBluetoothAdapter != null) {
@@ -150,7 +146,6 @@ public class DeviceListActivity extends Activity implements ToastInterface {
         @Override
         public void onClick(DialogInterface dialog, int which) {
             dialog.dismiss();
-            Log.i(LOG_TAG, "Se logea desde el CancelarListener method");
             myBluetoothAdapter.cancelDiscovery();
         }
     };
@@ -158,7 +153,6 @@ public class DeviceListActivity extends Activity implements ToastInterface {
     @Override
     public void onDestroy() {
         unregisterReceiver(bluetoothReceiver);
-
         super.onDestroy();
     }
 
@@ -167,7 +161,6 @@ public class DeviceListActivity extends Activity implements ToastInterface {
             Method method = device.getClass().getMethod("createBond", (Class[]) null);
             method.invoke(device, (Object[]) null);
             address = device.getAddress();
-            Log.i(LOG_TAG, device.getAddress());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -178,7 +171,7 @@ public class DeviceListActivity extends Activity implements ToastInterface {
             //noinspection rawtypes
             Method method = device.getClass().getMethod("removeBond", (Class[]) null);
             method.invoke(device, (Object[]) null);
-            address = null;
+            // address = null;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -201,102 +194,98 @@ public class DeviceListActivity extends Activity implements ToastInterface {
         @SuppressLint("MissingPermission")
         @Override
         public void onPairButtonClick(int position) {
-            //Obtengo los datos del dispostivo seleccionado del listview por el usuario
+            // Obtengo los datos del dispostivo seleccionado del listview por el usuario
             BluetoothDevice device = myDeviceList.get(position);
 
-            //Se checkea si el sipositivo ya esta emparejado
+            // Se chequea si el dipositivo ya esta emparejado
             if (device.getBondState() == BluetoothDevice.BOND_BONDED) {
-                //Si esta emparejado,quiere decir que se selecciono desemparjar y entonces se le desempareja
+                // Si esta emparejado, entonces se lo desempareja
                 unpairDevice(device);
             } else {
-                //Si no esta emparejado,quiere decir que se selecciono emparjar y entonces se le empareja
-                showToast(getApplicationContext(),"Emparejando");
+                // Si no esta emparejado, entonces se lo empareja
+                showToast(getApplicationContext(),getString(R.string.pairingText));
                 posicionListBluetooth = position;
                 pairDevice(device);
             }
         }
     };
 
-    //Handler que captura los brodacast que emite el SO al ocurrir los eventos del bluethoot
+    //Handler que captura los brodacast que emite el SO al ocurrir los eventos del Bluetooth
     private final BroadcastReceiver bluetoothReceiver = new BroadcastReceiver() {
         @SuppressLint("MissingPermission")
         public void onReceive(Context context, Intent intent) {
-            //Atraves del Intent obtengo el evento de Bluethoot que informo el broadcast del SO
+            //Atraves del Intent obtengo el evento de Bluetooth que informo el broadcast del SO
             String action = intent.getAction();
 
             switch(action) {
 
-                //Cambia el estado del Bluethoot (Acrtivado /Desactivado)
+                // Cambia el estado del Bluetooth (Activado/Desactivado)
                 case BluetoothAdapter.ACTION_STATE_CHANGED : {
-                    //Obtengo el parametro, aplicando un Bundle, que me indica el estado del Bluethoot
+                    //Obtengo el parametro, aplicando un Bundle, que me indica el estado del Bluetooth
                     final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
 
-                    //Si esta activado
+                    // Si esta activado
                     if (state == BluetoothAdapter.STATE_ON)
                     {
-                        showToast(getApplicationContext(),"Activar");
+                        showToast(getApplicationContext(),getString(R.string.bluetoothEnabled));
                     }
                     break;
                 }
 
                 // Si se inicio la busqueda de dispositivos Bluetooth
                 case BluetoothAdapter.ACTION_DISCOVERY_STARTED : {
-                    //Creo la lista donde voy a mostrar los dispositivos encontrados
+                    // Creo la lista donde voy a mostrar los dispositivos encontrados
                     myDeviceList = new ArrayList<>();
-                    Log.i(LOG_TAG,"Se logea desde el Discovery Started");
 
-                    //muestro el cuadro de dialogo de busqueda
-                    //myProgressDialog.show();
+                    myAdapter.setData(myDeviceList);
+                    myListView.setAdapter(myAdapter);
+
+                    btnFind.setEnabled(false);
+                    // Muestro el cuadro de dialogo de busqueda
+                    myProgressDialog.show();
                     break;
                 }
 
                 // Si finalizo la busqueda de dispositivos Bluetooth
                 case BluetoothAdapter.ACTION_DISCOVERY_FINISHED : {
-                    //se cierra el cuadro de dialogo de busqueda
+                    // Se cierra el cuadro de dialogo de busqueda
                     myProgressDialog.dismiss();
-                    myAdapter.setData(myDeviceList);
-                    myListView.setAdapter(myAdapter);
                     btnFind.setEnabled(true);
-                    Log.i(LOG_TAG,"Se logea desde el Discovery Finished");
                     break;
                 }
 
                 // Si se encontro un dispositivo Bluetooth
                 case BluetoothDevice.ACTION_FOUND : {
-                    //Se lo agregan sus datos a una lista de dispositivos encontrados
+                    // Se agregan datos del dispositivo a una lista de dispositivos encontrados
                     BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                    Log.i(LOG_TAG,"Se logea desde el Device Found");
                     myDeviceList.add(device);
-                    showToast(getApplicationContext(),"Dispositivo Encontrado: " + device.getName());
+                    HashSet nonRepeatedDevices = new HashSet(myDeviceList);
+                    myDeviceList.clear();
+                    myDeviceList.addAll(nonRepeatedDevices);
+                    myAdapter.setData(myDeviceList);
+                    myListView.setAdapter(myAdapter);
 
+                    Log.i(LOG_TAG,"Dispositivo Encontrado: " + device.getAddress());
                     break;
                 }
 
                 // Si el SO detecto un (des)emparejamiento de Bluetooth
                 case BluetoothDevice.ACTION_BOND_STATE_CHANGED: {
-
-                    //Obtengo los parametro, aplicando un Bundle, que me indica el estado del Bluethoot
+                    // Obtengo los parametro, aplicando un Bundle, que me indica el estado
                     final int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
                     final int prevState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
 
-                    //se analiza si se puedo emparejar o no
                     if (state == BluetoothDevice.BOND_BONDED && prevState == BluetoothDevice.BOND_BONDING) {
-                        //Si se detecto que se puedo emparejar el bluethoot
+                        // Si se emparejo un dispositivo
+                        BluetoothDevice device = (BluetoothDevice) myAdapter.getItem(posicionListBluetooth);
+                        address = device.getAddress();
+                        Log.i(LOG_TAG,"Nueva direccion emparejada: " + address);
                         showToast(getApplicationContext(), getString(R.string.pairedDevice));
-                        BluetoothDevice dispositivo = (BluetoothDevice) myAdapter.getItem(posicionListBluetooth);
-
-                        //se inicia el Activity de comunicacion con el bluethoot, para transferir los datos.
-                        //Para eso se le envia como parametro la direccion(MAC) del bluethoot Arduino
-                        String direccionBluethoot = dispositivo.getAddress();
-                        Intent i = new Intent(DeviceListActivity.this, MainActivity.class);
-                        i.putExtra(getString(R.string.BluetoothAddressIntentKey), direccionBluethoot);
-
-                        startActivity(i);
-
                     }
-                    //si se detrecto un desaemparejamiento
                     else if (state == BluetoothDevice.BOND_NONE && prevState == BluetoothDevice.BOND_BONDED) {
+                        // Si se desemparejo un dispositivo
                         showToast(getApplicationContext(), getString(R.string.deviceUnpaired));
+                        address = null;
                     }
 
                     myAdapter.notifyDataSetChanged();
