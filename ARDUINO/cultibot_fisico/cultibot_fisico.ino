@@ -78,7 +78,7 @@
 #define REGISTRO_TCCR1A 0b00000000
 #define REGISTRO_TCCR1B 0b00001101
 #define REGISTRO_OCR1A 3905.25   // Interrupcion cada 0.25 segundo
-#define LIMIT_SOFTWARE_TEMP = 20 // 20*0.25=5s
+#define LIMIT_SOFTWARE_TEMP 20 // 20*0.25=5s
 
 // MAQUINA DE ESTADOS
 #define STATES 5
@@ -88,7 +88,6 @@
 #define PIN_SERIAL_BLUETOOTH_RX 10
 #define PIN_SERIAL_BLUETOOTH_TX 11
 #define BAUDRATE 9600
-#define BLUETOOTH_REPORT_COMMAND "GET"
 #define BUFFER_SIZE 50
 
 /******************** DECLARACION MAQUINA DE ESTADOS *********************/
@@ -157,6 +156,10 @@ DHT dht(DHT11_PIN, DHTTYPE); // Inicializamos el sensor DHT11
 // Inicializamos canal serial con el modulo bluetooth
 SoftwareSerial BTserial(PIN_SERIAL_BLUETOOTH_RX, PIN_SERIAL_BLUETOOTH_TX);
 char serial_msg = ' ';
+char BLUETOOTH_REPORT_COMMAND = 'G';
+char BLUETOOTH_WATER_COMMAND = 'P';
+
+boolean waterSemaphore = false;
 
 // Inicializacion variables para comparacion de lecturas
 int prev_temp;
@@ -187,14 +190,17 @@ void loop()
     if (BTserial.available())
     {
         serial_msg = BTserial.read();
-        if (String(serial_msg) == String(BLUETOOTH_REPORT_COMMAND))
+        if ( serial_msg == BLUETOOTH_REPORT_COMMAND )
         {
             send_sensors_data_to_btserial();
         }
-        else
+        else if ( serial_msg == BLUETOOTH_WATER_COMMAND )
         {
-            Serial.write(serial_msg);
+            // Si esta el semaforo prendido, significa que estoy regando desde Android
+            waterSemaphore = !waterSemaphore;
+            digitalWrite(WATER_LED_PIN, waterSemaphore ? HIGH : LOW );
         }
+        
     }
     if (Serial.available())
     {
@@ -202,7 +208,9 @@ void loop()
         Serial.write(serial_msg);
         BTserial.write(serial_msg);
     }
-
+    serial_msg = ' ';
+    Serial.flush();
+    BTserial.flush();
     finite_state_machine();
 }
 
@@ -247,12 +255,6 @@ float read_humidity()
         DebugPrint("Error al obtener humedad del DHT11");
         return prev_humidity;
     }
-    else
-    {
-        // DEBUG
-        DebugPrint("Humedad leida por el DHT11: ");
-        DebugPrint(current_humidity);
-    }
 
     return current_humidity;
 }
@@ -267,12 +269,6 @@ int read_light(int sensor)
     {
         DebugPrint("Error al obtener luz del DHT11");
         return prev_light;
-    }
-    else
-    {
-        // DEBUG
-        DebugPrint("Luz leida por el fotosensor: ");
-        DebugPrint(map(current_light, LIGHT_MIN_VALUE, LIGHT_MAX_VALUE, MIN_VALUE, MAX_VALUE));
     }
 
     return map(current_light, LIGHT_MIN_VALUE, LIGHT_MAX_VALUE, MIN_VALUE, MAX_VALUE);
@@ -307,24 +303,26 @@ void turn_off_triggers()
 
 void turn_on_triggers()
 {
-    if (!event.humidity_ok)
+    if(!waterSemaphore) 
     {
-        digitalWrite(WATER_LED_PIN, HIGH);
+        if (!event.humidity_ok)
+        {
+            digitalWrite(WATER_LED_PIN, HIGH);
+        }
+        else
+        {
+            digitalWrite(WATER_LED_PIN, LOW);
+        }  
     }
-    else
-    {
-        digitalWrite(WATER_LED_PIN, LOW);
-    }
+    
 
     if (event.temperature > CRITIC_HIGH_TEMP_25)
     {
-        DebugPrint("Estoy prendiendo el ventilador");
         int cooler_intensity = get_cooler_intensity(event.temperature);
         analogWrite(COOLER_TRANSISTOR_PIN, cooler_intensity);
     }
     else
     {
-        DebugPrint("Estoy apagando el ventilador");
         analogWrite(COOLER_TRANSISTOR_PIN, COOLER_OFF);
 
         if (event.temperature < CRITIC_LOW_TEMP)
@@ -524,7 +522,7 @@ void adecuate()
         turn_on_triggers();
     }
 
-    send_sensors_data_to_btserial();
+//    send_sensors_data_to_btserial();
 }
 
 void idle_again()
