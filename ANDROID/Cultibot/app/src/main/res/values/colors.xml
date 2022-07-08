@@ -2,7 +2,7 @@
 <resources>
     <color name="green_200">#FFA5D6A7</color>
     <color name="green_500">#FF4CAF50</color>
-    <color name="green_700">#FF388E3C</color>
+    <color name="green_700">#5CC161</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="red_700">#D32F2F</color>

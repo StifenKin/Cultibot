@@ -60,14 +60,14 @@
 
 /*************************** UMBRALES PARTICULARES ****************************/
 #define CRITIC_HIGH_TEMP_100 100
-#define CRITIC_HIGH_TEMP_75 75
-#define CRITIC_HIGH_TEMP_50 50
-#define CRITIC_HIGH_TEMP_25 25
-#define CRITIC_LOW_TEMP 20
+#define CRITIC_HIGH_TEMP_75 100
+#define CRITIC_HIGH_TEMP_50 100
+#define CRITIC_HIGH_TEMP_25 5
+#define CRITIC_LOW_TEMP 100
 
 #define CRITIC_LOW_LIGHT 25
 
-#define CRITIC_LOW_HUMIDITY 80
+#define CRITIC_LOW_HUMIDITY 20
 
 #define INITIAL_TEMP -1500
 #define INITIAL_HUMIDITY -1500
@@ -402,8 +402,10 @@ void send_sensors_data_to_btserial()
     else
     {
         sensors.toCharArray(buffer, BUFFER_SIZE);
+        
         BTserial.println(buffer);
         BTserial.flush();
+        
     }
 }
 
@@ -490,7 +492,10 @@ void monitor_plant()
     event.light = read_light(LIGHT_SENSOR_PIN);
     event.temperature = read_temperature();
     event.humidity = read_humidity();
-
+    DebugPrint(event.light);
+    DebugPrint(event.temperature);
+    DebugPrint(event.humidity);
+    
     // Para indicar que se realizo el senseo
     event.type = MONITORED;
 }

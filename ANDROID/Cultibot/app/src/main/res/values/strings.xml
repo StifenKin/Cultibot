@@ -7,6 +7,10 @@
     <string name="BLUETOOTH_REPORT_COMMAND">G</string>
     <string name="BLUETOOTH_WATER_COMMAND">P</string>
     <string name="CommandIntentKey">COMMAND</string>
+    <string name="cancelText">Cancelar</string>
+    <string name="waitingForValue">…</string>
+    <string name="grade">°</string>
+    <string name="percentage">%</string>
 
     <!-- Activities Labels -->
     <string name="labelLoginActivity">Login</string>
@@ -52,8 +56,9 @@
     <string name="bluetoothDisabled">Bluetooth deshabilitado</string>
     <string name="bluetoothEnabled">Bluetooth habilitado</string>
     <string name="pairingText">Conectando…</string>
+    <string name="onDiscoveryText">Buscando dispositivos…</string>
 
-    <!-- BLuetooth Service -->
+    <!-- Bluetooth Service -->
     <string name="socketCreationFailure">Fallo la creación del socket.</string>
     <string name="socketConnectionFailure">Fallo la conexion del socket.</string>
     <string name="socketDesconnectionFailure">Fallo la desconexion del socket.</string>

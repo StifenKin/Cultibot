@@ -18,7 +18,6 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class BlueToothService extends IntentService implements ToastInterface{
-    private static final String LOG_TAG = "BT_SERVICE";
     public static final String ACTION_REPORT = "com.example.cultibot.intent.action.REPORT";
     public static final String ACTION_WATER = "com.example.cultibot.intent.action.WATER";
 
@@ -43,9 +42,7 @@ public class BlueToothService extends IntentService implements ToastInterface{
     protected void onHandleIntent(Intent intent) {
         Bundle extras = intent.getExtras();
         String data = extras.getString(getString(R.string.SensorsDataIntentKey));
-
-        Log.i(LOG_TAG, "data is " + data + "."); // DEBUG
-
+        Log.i("ARDUINO", data);
         Intent bcIntent = new Intent();
         if (command.contains(getString(R.string.BLUETOOTH_REPORT_COMMAND)))
             bcIntent.setAction(ACTION_REPORT);
@@ -76,8 +73,6 @@ public class BlueToothService extends IntentService implements ToastInterface{
 
             BluetoothDevice device = btAdapter.getRemoteDevice(address);
 
-            Log.i(LOG_TAG, "Device name is " + device.getName() + "."); // DEBUG
-
             // Se realiza la conexion del Bluethoot crea y se conectandose a atraves de un socket
             try {
                 btSocket = createBluetoothSocket(device);
@@ -97,15 +92,15 @@ public class BlueToothService extends IntentService implements ToastInterface{
                 // recibir los datos de Arduino atraves del bluetooth
                 mConnectedThread = new ConnectedThread(btSocket);
                 mConnectedThread.start();
-                Log.i(LOG_TAG, "Thread " + mConnectedThread.getName() + " creado exitosamente."); // DEBUG
+
+                mConnectedThread.write(command);
 
             } catch (IOException e) {
                 showToast(getApplicationContext(), getString(R.string.socketCreationFailure));
             }
         }
 
-        mConnectedThread.write(command);
-        Log.i(LOG_TAG, "Se escribio el comando " + command + " exitosamente."); // DEBUG
+
         return START_STICKY;
     }
 
@@ -147,8 +142,8 @@ public class BlueToothService extends IntentService implements ToastInterface{
     }
 
 
-    //******************************************** Hilo secundario del Activity**************************************
-    //*************************************** recibe los datos enviados por el HC05**********************************
+    //********************************** Hilo secundario del Service *******************************
+    //****************************** recibe los datos enviados por el HC05 *************************
 
     private class ConnectedThread extends Thread
     {
@@ -180,17 +175,17 @@ public class BlueToothService extends IntentService implements ToastInterface{
             byte[] buffer = new byte[256];
             int bytes;
 
-            //el hilo secundario se queda esperando mensajes del HC05
+            // el hilo secundario se queda esperando mensajes del HC05
             while (true)
             {
                 try
                 {
-                    //se leen los datos del Bluethoot
+                    // Se leen los datos del Bluethoot
                     bytes = mmInStream.read(buffer);
                     String readMessage = new String(buffer, 0, bytes);
 
-                    //se muestran en el layout de la activity, utilizando el handler del hilo
-                    // principal antes mencionado
+                    // Se muestran en el layout de la activity, utilizando el handler del hilo
+                    // Principal antes mencionado
                     bluetoothIn.obtainMessage(handlerState, bytes, -1, readMessage).sendToTarget();
                 } catch (IOException e) {
                     break;

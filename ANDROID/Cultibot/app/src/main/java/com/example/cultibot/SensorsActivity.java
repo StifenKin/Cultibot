@@ -22,13 +22,12 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class SensorsActivity extends AppCompatActivity implements ToastInterface, SensorEventListener{
-    private static final String LOG_TAG = "SENSORS";
     // MAC ADDRESS BT
     private static String address = null;
     private boolean waterLedPin = false;
     private final int UPDATING_STATUS = 1000;
     private final int UPDATED_STATUS = 1001;
-
+    private boolean timeout = false;
     private boolean semaphore = false;
 
     private SensorManager mySensorManager;
@@ -39,7 +38,6 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
     private TextView lightValue;
     private TextView humidityValue;
 
-    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,8 +67,8 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
         lightValue.setTypeface(lightValue.getTypeface(), Typeface.BOLD);
 
         temperatureValue.setText("22°");
-        humidityValue.setText("75%");
-        lightValue.setText("55%");
+        humidityValue.setText("50%");
+        lightValue.setText("80%");
 
         updateStatus(UPDATED_STATUS);
 
@@ -98,7 +96,7 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
     protected void stop_sensor()
     {
         mySensorManager.unregisterListener(this, mySensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER));
-        unregisterReceiver(rcv);
+        // unregisterReceiver(rcv);
     }
 
     /*Called when the user taps the Volver Button*/
@@ -115,9 +113,7 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
     {
         switch(newState){
             case UPDATING_STATUS:
-                Log.i(LOG_TAG, "Address is " + address + ".");
                 if(semaphore || address.equals("")) {
-                    Log.i(LOG_TAG, "State is not updated.");
                     return;
                 }
                 Intent msgIntent = new Intent(SensorsActivity.this, BlueToothService.class);
@@ -127,9 +123,12 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
 
                 statusText.setText(R.string.updatingStatusText);
 
-                SensorsActivity.ThreadAsyncTask hilo =  new SensorsActivity.ThreadAsyncTask();
+                /* Inicializamos hilo para atajar TIMEOUTS de parte del Arduino */
+                TimeoutThread hilo =  new TimeoutThread();
                 hilo.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                 semaphore = true;
+                timeout = true;
+
                 break;
             case UPDATED_STATUS:
                 statusText.setText(R.string.updatedStatusText);
@@ -178,6 +177,7 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
         super.onResume();
         ini_sensor();
 
+        /*
         // Obtengo el parametro, aplicando un Bundle, que me indica la Mac Adress del HC05
         if(!address.equals("")) {
             Intent intent = getIntent();
@@ -194,8 +194,8 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
                 showToast(getApplicationContext(), "Fallo el intent: " + ex);
             }
         }
-
-        updateStatus(UPDATING_STATUS);
+        */
+        updateStatus(UPDATED_STATUS);
     }
 
 
@@ -207,6 +207,9 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
                 Bundle extras = intent.getExtras();
                 String sensorsData = extras.getString(getString(R.string.SensorsDataIntentKey));
                 formatData(sensorsData);
+                updateStatus(UPDATED_STATUS);
+                semaphore = false;
+                timeout = false;
             }
             else if (intent.getAction().equals(BlueToothService.ACTION_WATER)) {
                 showToast(getApplicationContext(), getString(R.string.waterSuccessMsg));
@@ -217,21 +220,23 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
         }
 
         private void formatData(String data) {
-            Log.i(LOG_TAG, data);
-
+            Log.i("ARDUINO", semaphore ? "Semaforo es true.": "Semaforo es false");
+            Log.i("ARDUINO", timeout ? "timeout es true.": "timeout es false");
+            Log.i("ARDUINO", data);
             String[] sensors = data.split(";");
-            temperatureValue.setText(sensors[0] + "°");
-            lightValue.setText(sensors[1] + "%");
-            humidityValue.setText(sensors[2] + "%");
+            temperatureValue.setText(sensors[0] + getString(R.string.grade));
+            lightValue.setText(sensors[1] + getString(R.string.percentage));
+            humidityValue.setText(sensors[2] + getString(R.string.percentage));
         }
     }
 
-    private class ThreadAsyncTask extends AsyncTask<Integer, Void, Integer> {
+    /* Hilo en background que ataja timeouts del Arduino */
+    private class TimeoutThread extends AsyncTask<Integer, Void, Integer> {
 
         @Override
         protected Integer doInBackground(Integer... integers) {
             try {
-                int SECONDS = 3000;
+                int SECONDS = 5000;
                 Thread.sleep(SECONDS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -240,8 +245,11 @@ public class SensorsActivity extends AppCompatActivity implements ToastInterface
         }
 
         protected void onPostExecute(Integer result){
-            updateStatus(UPDATED_STATUS);
-            semaphore = false;
+            if(timeout) {
+                updateStatus(UPDATED_STATUS);
+                semaphore = false;
+                timeout = false;
+            }
         }
     }
 }

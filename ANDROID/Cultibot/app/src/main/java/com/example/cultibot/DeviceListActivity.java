@@ -11,7 +11,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
@@ -25,7 +24,6 @@ import java.util.HashSet;
  **************************************************************************************************/
 
 public class DeviceListActivity extends Activity implements ToastInterface {
-    private static final String LOG_TAG = "DEVICE_LIST";
     private ListView myListView;
     private DeviceListAdapter myAdapter;
     private ArrayList<BluetoothDevice> myDeviceList;
@@ -57,15 +55,13 @@ public class DeviceListActivity extends Activity implements ToastInterface {
 
         btnFind.setOnClickListener(btnBuscarListener);
 
-        // myBluetoothAdapter.startDiscovery();
-
         //Se Crea la ventana de dialogo que indica que se esta buscando dispositivos Bluetooth
         myProgressDialog = new ProgressDialog(DeviceListActivity.this);
 
-        myProgressDialog.setMessage("Buscando dispositivos...");
+        myProgressDialog.setMessage(getString(R.string.onDiscoveryText));
         myProgressDialog.setCancelable(false);
         //se asocia un listener al boton cancelar para la ventana de dialogo ue busca los dispositivos Bluetooth
-        myProgressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancelar", btnCancelarDialogListener);
+        myProgressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, getString(R.string.cancelText), btnCancelarDialogListener);
 
 
         // Defino un adaptador para el ListView donde se van mostrar en la activity los dispositovs encontrados
@@ -171,7 +167,7 @@ public class DeviceListActivity extends Activity implements ToastInterface {
             //noinspection rawtypes
             Method method = device.getClass().getMethod("removeBond", (Class[]) null);
             method.invoke(device, (Object[]) null);
-            // address = null;
+            address = null;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -210,7 +206,7 @@ public class DeviceListActivity extends Activity implements ToastInterface {
         }
     };
 
-    //Handler que captura los brodacast que emite el SO al ocurrir los eventos del Bluetooth
+    // Handler que captura los brodacast que emite el SO al ocurrir los eventos del Bluetooth
     private final BroadcastReceiver bluetoothReceiver = new BroadcastReceiver() {
         @SuppressLint("MissingPermission")
         public void onReceive(Context context, Intent intent) {
@@ -264,8 +260,6 @@ public class DeviceListActivity extends Activity implements ToastInterface {
                     myDeviceList.addAll(nonRepeatedDevices);
                     myAdapter.setData(myDeviceList);
                     myListView.setAdapter(myAdapter);
-
-                    Log.i(LOG_TAG,"Dispositivo Encontrado: " + device.getAddress());
                     break;
                 }
 
@@ -279,7 +273,6 @@ public class DeviceListActivity extends Activity implements ToastInterface {
                         // Si se emparejo un dispositivo
                         BluetoothDevice device = (BluetoothDevice) myAdapter.getItem(posicionListBluetooth);
                         address = device.getAddress();
-                        Log.i(LOG_TAG,"Nueva direccion emparejada: " + address);
                         showToast(getApplicationContext(), getString(R.string.pairedDevice));
                     }
                     else if (state == BluetoothDevice.BOND_NONE && prevState == BluetoothDevice.BOND_BONDED) {

@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -19,7 +18,6 @@ import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity implements ToastInterface {
-    private static final String LOG_TAG = "MAIN";
     private String address = null;
     Button btnCheckState;
     Button btnConnectDevice;
@@ -48,7 +46,6 @@ public class MainActivity extends AppCompatActivity implements ToastInterface {
         btnConnectDevice = findViewById(R.id.btnConnectDevice);
 
         address = getIntent().getExtras().getString(getString(R.string.BluetoothAddressIntentKey));
-        Log.i(LOG_TAG, "Se obtuvo del intent la address: " + address);
 
         btnConnectDevice.setEnabled(checkPermissions());
 
